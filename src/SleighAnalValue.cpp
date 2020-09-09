@@ -229,7 +229,10 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RAnal *anal,
 				{
 					tmp = resolve_arg(anal, iter->input1);
 					if(tmp.is_valid())
+					{
+						tmp.mem(iter->output->size);
 						res.push_back(tmp);
+					}
 				}
 			}
 			else
@@ -250,4 +253,28 @@ std::vector<SleighAnalValue> SleighAnalValue::resolve_out(RAnal *anal,
 	}
 
 	return res;
+}
+
+void SleighAnalValue::mem(uint4 size)
+{
+	if(is_mem())
+		return;
+
+	if(is_imm())
+	{
+		base = imm;
+		imm = 0;
+	}
+	memref = size;
+	type = R_ANAL_VAL_MEM;
+}
+
+RAnalValue *SleighAnalValue::dup() const
+{
+	RAnalValue *to = r_anal_value_new();
+	if(!to)
+		return to;
+
+	*to = (RAnalValue)*this;
+	return to;
 }

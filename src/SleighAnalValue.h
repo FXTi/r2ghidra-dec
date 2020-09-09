@@ -5,12 +5,6 @@
 
 #include "SleighAsm.h"
 
-template<typename T>
-static inline T inner_max(T foo, T bar)
-{
-	return foo > bar? foo: bar;
-}
-
 struct SleighAnalValue: public RAnalValue
 {
 public:
@@ -34,9 +28,17 @@ public:
 	bool is_mem() const { return type == R_ANAL_VAL_MEM; }
 
 	void invalid() { absolute = -1; }
+	void mem(uint4 size);
+	RAnalValue *dup() const;
 
 private:
 	static RAnalValueType type_from_values(const SleighAnalValue &in0, const SleighAnalValue &in1);
+
+	template<typename T>
+	static inline T inner_max(T foo, T bar)
+	{
+		return foo > bar? foo: bar;
+	}
 };
 
 #endif // R2GHIDRA_SLEIGHANALVALUE_H
