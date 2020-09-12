@@ -1362,7 +1362,7 @@ static int sleigh_op(RAnal *a, RAnalOp *anal_op, ut64 addr, const ut8 *data, int
 	PcodeSlg pcode_slg(&sanal);
 	AssemblySlg assem(&sanal);
 	Address caddr(sanal.trans.getDefaultCodeSpace(), addr);
-	sanal.check(a->pc, data, len);
+	sanal.check(addr, data, len);
 	anal_op->size = sanal.genOpcode(pcode_slg, caddr);
 	if((anal_op->size < 1) || (sanal.trans.printAssembly(assem, caddr) < 1))
 		return anal_op->size; // When current place has no available code, return ILL.

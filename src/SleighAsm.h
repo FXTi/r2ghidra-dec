@@ -258,8 +258,8 @@ public:
 				ctx->setParserState(ParserContext::uninitialized);
 		}
 
-		if(trans.ins_cache.has(offset))
-			trans.ins_cache.clear();`
+		if(trans.getInsCache()->has(offset))
+			trans.getInsCache()->clear();
 	}
 };
 

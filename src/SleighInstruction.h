@@ -17,7 +17,10 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	const size_t cache_size = 32; // Do not enlarge this. This sync with DissemblyCache's windowsize, inited with sleigh itself.
+	// Do not enlarge this.
+	// This sync with DisassemblyCache's windowsize,
+	// inited with sleigh itself.
+	const size_t cache_size = 32;
 
 	void clean()
 	{
@@ -305,6 +308,7 @@ public:
 
 	void resolve(SleighParserContext &pos) const;
 	void clearCache();
+	LRUCache<uintm, SleighInstruction *> *getInsCache() { return &ins_cache; }
 
 	ParserContext *getContext(const Address &addr,int4 state) const
 	{
@@ -405,7 +409,6 @@ public:
 
 		rootState.parent = nullptr; // rootState = new ConstructState(null);
 
-		// protoContext = sleigh->getParserContext(inst, this);
 		SleighParserContext *protoContext = sleigh->newSleighParserContext(inst->baseaddr, this);
 		sleigh->resolve(*protoContext);
 		delete protoContext;
@@ -413,8 +416,6 @@ public:
 		// std::cerr << inst->baseaddr << ": 0x" << hex << hashCode << std::endl;
 
 		length = rootState.length;
-
-		// cacheTreeInfo();
 	}
 
 	~SleighInstructionPrototype()
