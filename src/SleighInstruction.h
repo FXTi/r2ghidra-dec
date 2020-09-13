@@ -17,9 +17,9 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	// Do not enlarge this.
-	// This sync with DisassemblyCache's windowsize,
-	// inited with sleigh itself.
+	// This should sync cachesize with DisassemblyCache,
+	// but default setting of it is just 2 elements cached.
+	// So disable this cache for now.
 	const size_t cache_size = 32;
 
 	void clean()
