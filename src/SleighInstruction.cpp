@@ -24,18 +24,14 @@ SleighInstructionPrototype *R2Sleigh::getPrototype(SleighInstruction *context)
 SleighInstruction *R2Sleigh::getInstruction(Address &addr)
 {
 	SleighInstruction *inst = nullptr;
-	/*
 	if(!ins_cache.has(addr.getOffset()))
 	{
-		*/
 		inst = new SleighInstruction(addr);
 		inst->proto = getPrototype(inst);
-		/*
 		ins_cache.put(addr.getOffset(), inst);
 	}
 	else
 		inst = ins_cache.get(addr.getOffset());
-	*/
 
 	return inst;
 }
@@ -80,11 +76,18 @@ void R2Sleigh::reconstructContext(ParserContext &protoContext)
 	protoContext.setParserState(ParserContext::disassembly);
 }
 
-SleighParserContext *R2Sleigh::getParserContext(Address &addr, SleighInstructionPrototype *proto)
+SleighParserContext *R2Sleigh::getParserContext(Address &addr, SleighInstruction *inst)
 {
-	SleighParserContext *pos = newSleighParserContext(addr, proto);
-	reconstructContext(*pos);
-	resolveHandles(*pos);
+	SleighParserContext *pos = nullptr;
+	if(inst->parser_context)
+		pos = inst->parser_context;
+	else
+	{
+		pos = newSleighParserContext(addr, inst->proto);
+		reconstructContext(*pos);
+		resolveHandles(*pos);
+		inst->parser_context = pos;
+	}
 
 	return pos;
 }
@@ -473,10 +476,9 @@ SleighInstructionPrototype::FlowFlags SleighInstructionPrototype::gatherFlags(Fl
 			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
 
 			Address newaddr(spc, addr);
-			SleighParserContext *crosscontext = inst->getParserContext(newaddr);
+			SleighParserContext *crosscontext = sleigh->getInstruction(newaddr)->getParserContext();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			curflags = crosscontext->getPrototype()->gatherFlags(curflags, inst, newsecnum);
-			delete crosscontext;
 		}
 		else
 		{
@@ -484,8 +486,6 @@ SleighInstructionPrototype::FlowFlags SleighInstructionPrototype::gatherFlags(Fl
 			curflags = FlowFlags(curflags | rec->flowFlags);
 		}
 	}
-
-	delete pos;
 
 	return curflags;
 }
@@ -518,10 +518,9 @@ void SleighInstructionPrototype::gatherFlows(std::vector<Address> &res, SleighIn
 			uintb addr = spc->wrapOffset(vn->getOffset().fix(walker));
 
 			Address newaddr(spc, addr);
-			SleighParserContext *crosscontext = inst->getParserContext(newaddr);
+			SleighParserContext *crosscontext = sleigh->getInstruction(newaddr)->getParserContext();
 			int newsecnum = rec->op->getIn(1)->getOffset().getReal();
 			crosscontext->getPrototype()->gatherFlows(res, inst, newsecnum);
-			delete crosscontext;
 		}
 		else if((rec->flowFlags & (FLOW_JUMPOUT | FLOW_CALL)) != 0)
 		{
@@ -533,8 +532,6 @@ void SleighInstructionPrototype::gatherFlows(std::vector<Address> &res, SleighIn
 			}
 		}
 	}
-
-	delete parsecontext;
 }
 
 Address SleighInstructionPrototype::getHandleAddr(FixedHandle &hand, AddrSpace *curSpace)
@@ -633,14 +630,14 @@ SleighParserContext *SleighInstruction::getParserContext(Address &addr)
 {
 	if(!proto)
 		throw LowlevelError("getParserContext: proto is not inited.");
-	return proto->getParserContext(addr);
+	return proto->getParserContext(addr, this);
 }
 
 SleighParserContext *SleighInstruction::getParserContext()
 {
 	if(!proto)
 		throw LowlevelError("getParserContext: proto is not inited.");
-	return proto->getParserContext(baseaddr);
+	return proto->getParserContext(baseaddr, this);
 }
 
 Address SleighInstruction::getFallThrough()
@@ -655,4 +652,9 @@ VarnodeData SleighInstruction::getIndirectInvar()
 	if(!proto)
 		throw LowlevelError("getIndirectInvar: proto is not inited.");
 	return proto->getIndirectInvar(this);
+}
+
+SleighParserContext *SleighInstructionPrototype::getParserContext(Address &addr, SleighInstruction *inst)
+{
+	return sleigh->getParserContext(addr, inst);
 }

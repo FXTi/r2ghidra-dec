@@ -17,10 +17,7 @@ class LRUCache
 private:
 	std::list<std::pair<K, V>> item_list;
 	std::unordered_map<K, decltype(item_list.begin())> item_map;
-	// This should sync cachesize with DisassemblyCache,
-	// but default setting of it is just 2 elements cached.
-	// So disable this cache for now.
-	const size_t cache_size = 32;
+	const size_t cache_size = 4096;
 
 	void clean()
 	{
@@ -299,7 +296,7 @@ public:
 	void reset(LoadImage *ld,ContextDatabase *c_db) { R2loader = ld; Sleigh::reset(ld, c_db); }
 	void reconstructContext(ParserContext &protoContext);
 	SleighParserContext *newSleighParserContext(Address &addr, SleighInstructionPrototype *proto);
-	SleighParserContext *getParserContext(Address &addr, SleighInstructionPrototype *proto);
+	SleighParserContext *getParserContext(Address &addr, SleighInstruction *inst);
 
 	SleighInstructionPrototype *getPrototype(SleighInstruction *context);
 	SleighInstruction *getInstruction(Address &addr);
@@ -320,8 +317,10 @@ struct SleighInstruction
 {
 	Address baseaddr;
 	SleighInstructionPrototype *proto = nullptr;
+	SleighParserContext *parser_context = nullptr;
 
 	SleighInstruction(Address &addr): baseaddr(addr) {}
+	~SleighInstruction() { delete parser_context; }
 
 	FlowType getFlowType();
 	std::vector<Address> getFlows();
@@ -398,7 +397,7 @@ public:
 	Address getFallThrough(SleighInstruction *inst);
 	int getFallThroughOffset(SleighInstruction *inst);
 	// bool isFallthrough() { return flowTypeHasFallthrough(getFlowType()); }
-	SleighParserContext *getParserContext(Address &addr) { return sleigh->getParserContext(addr, this); }
+	SleighParserContext *getParserContext(Address &addr, SleighInstruction *inst);
 	void cacheTreeInfo(); // It could be renamed to parse(), but keep original name to ease update
 	VarnodeData getIndirectInvar(SleighInstruction *ins);
 
