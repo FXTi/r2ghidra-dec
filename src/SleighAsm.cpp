@@ -642,9 +642,8 @@ void SleighAsm::check(ut64 offset, const ut8 *buf, int len)
 			ut8 *cached = inst->parser_context->getBuffer();
 			int i = 0;
 			for(; i < len && cached[i] == buf[i]; ++i) {}
-			if(i == len)
+			if(i != len)
 				return;
 		}
-		trans.getInsCache()->clear();
 	}
 }
